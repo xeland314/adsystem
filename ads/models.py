@@ -88,3 +88,29 @@ class Click(models.Model):
     class Meta:
         verbose_name = "Click"
         ordering = ["-timestamp"]
+
+
+class Carousel(models.Model):
+    """
+    Modelo para un carrusel de anuncios, que contiene múltiples Ads.
+    """
+    name = models.CharField(max_length=200, unique=True, verbose_name="Nombre del Carrusel")
+    # Los anuncios en este carrusel. Un carrusel puede tener muchos anuncios,
+    # y un anuncio puede estar en muchos carruseles.
+    ads = models.ManyToManyField(
+        Ad,
+        related_name='carousels',
+        verbose_name="Anuncios en el Carrusel",
+        blank=True # Un carrusel puede crearse sin anuncios al principio
+    )
+    is_active = models.BooleanField(default=True, verbose_name="Activo")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Creación")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Última Actualización")
+
+    def __str__(self):
+        return f"{self.name}"
+
+    class Meta:
+        verbose_name = "Carrusel de Anuncios"
+        verbose_name_plural = "Carruseles de Anuncios"
+        ordering = ['name']

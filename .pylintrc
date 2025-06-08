@@ -2,4 +2,4 @@
 ignore=migrations
 
 [TYPECHECK]
-ignored-classes=Click,Ad
+ignored-classes=Click,Ad,Carousel

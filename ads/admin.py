@@ -1,7 +1,7 @@
 # ads/admin.py
 from django.contrib import admin
-from django.db.models import Count  # Para agregar anotaciones de conteo
-from ads.models import Ad, Click
+from .models import Ad, Click, Carousel
+from django.db.models import Count
 
 
 @admin.register(Ad)
@@ -27,9 +27,7 @@ class AdAdmin(admin.ModelAdmin):
             "Información Adicional",
             {
                 "fields": ("total_clicks", "created_at", "updated_at"),
-                "classes": (
-                    "collapse",
-                ),  # Opcional: para que se pueda plegar en el admin
+                "classes": ("collapse",),
             },
         ),
     )
@@ -42,7 +40,7 @@ class AdAdmin(admin.ModelAdmin):
             from django.utils.html import mark_safe
 
             return mark_safe(
-                f'<img src="{obj.image.url}" style="width: 100px; height: auto;" />'
+                f'<img src="{obj.image.url}" style="width: 100px; height: auto; border-radius: 8px;" />'
             )
         return "No Image"
 
@@ -53,17 +51,15 @@ class AdAdmin(admin.ModelAdmin):
         Optimiza el queryset para incluir el conteo de clics.
         """
         queryset = super().get_queryset(request)
-        # Anotar el queryset con el conteo de clics para cada anuncio
         return queryset.annotate(click_count=Count("clicks"))
 
     def total_clicks(self, obj):
         """
         Muestra el conteo de clics para cada anuncio en el listado.
         """
-        # Se obtiene el conteo de la anotación 'click_count'
         return obj.click_count
 
-    total_clicks.admin_order_field = "click_count"  # Permite ordenar por este campo
+    total_clicks.admin_order_field = "click_count"
     total_clicks.short_description = "Total de Clicks"
 
 
@@ -76,13 +72,7 @@ class ClickAdmin(admin.ModelAdmin):
     list_display = ("ad_name", "timestamp", "user_ip", "user_agent_short")
     list_filter = ("ad", "timestamp")
     search_fields = ("ad__name", "user_ip", "user_agent")
-    readonly_fields = (
-        "ad",
-        "timestamp",
-        "user_ip",
-        "user_agent",
-        "session_id",
-    )  # Todos los campos son de solo lectura
+    readonly_fields = ("ad", "timestamp", "user_ip", "user_agent", "session_id")
 
     def ad_name(self, obj):
         """
@@ -104,3 +94,26 @@ class ClickAdmin(admin.ModelAdmin):
         )
 
     user_agent_short.short_description = "User Agent (Resumen)"
+
+
+@admin.register(Carousel)
+class CarouselAdmin(admin.ModelAdmin):
+    """
+    Configuración de la administración para el modelo Carousel.
+    """
+
+    list_display = ("name", "is_active", "ad_count", "created_at", "updated_at")
+    list_filter = ("is_active",)
+    search_fields = ("name",)
+    filter_horizontal = (
+        "ads",
+    )  # Para un mejor selector del ManyToManyField en el admin
+    readonly_fields = ("created_at", "updated_at")
+
+    def ad_count(self, obj):
+        """
+        Muestra el número de anuncios en el carrusel.
+        """
+        return obj.ads.count()
+
+    ad_count.short_description = "Número de Anuncios"

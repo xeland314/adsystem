@@ -13,4 +13,9 @@ urlpatterns = [
     path("statistics/", views.ad_statistics, name="ad_statistics"),
     path("login/", views.user_login, name="login"),
     path("logout/", views.user_logout, name="logout"),
+    path(
+        "carousel/<int:carousel_id>/display/",
+        views.carousel_display,
+        name="carousel_display",
+    ),
 ]

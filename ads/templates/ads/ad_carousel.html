@@ -1,0 +1,189 @@
+<!-- templates/ads/ad_carousel.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrusel: {{ carousel.name }}</title>
+    <!-- Incluir Tailwind CSS desde CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilos personalizados */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* bg-gray-100 */
+        }
+        .carousel-item {
+            flex-shrink: 0; /* Evita que los ítems se encojan */
+            width: 100%; /* Cada ítem ocupa el 100% del ancho del contenedor visible */
+            position: relative; /* Necesario para el overlay de texto */
+            height: 350px; /* Altura fija para los elementos del carrusel */
+            overflow: hidden; /* Oculta cualquier parte de la imagen que sobresalga */
+            border-radius: 12px; /* rounded-xl */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-xl */
+        }
+        .carousel-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Asegura que la imagen cubra el área sin distorsionarse */
+            transition: transform 0.3s ease-in-out; /* Transición suave para hover */
+        }
+        .carousel-item:hover img {
+            transform: scale(1.03); /* Ligeramente más grande al pasar el ratón */
+        }
+        .carousel-item a {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex; /* Asegura que el enlace ocupe todo el ítem */
+            align-items: center; /* Centra verticalmente */
+            justify-content: center; /* Centra horizontalmente */
+            text-align: center;
+        }
+        .carousel-controls button {
+            @apply bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-110;
+        }
+        .carousel-controls button:disabled {
+            @apply bg-gray-400 cursor-not-allowed opacity-75;
+        }
+        .carousel-inner {
+            display: flex;
+            /* La transición se manejará completamente por GSAP, no por CSS. */
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-6">
+    <div class="bg-white p-8 rounded-lg shadow-2xl max-w-2xl w-full text-center">
+        <h1 class="text-4xl font-extrabold text-gray-900 mb-6">
+            Carrusel de Anuncios: <span class="text-blue-600">{{ carousel.name }}</span>
+        </h1>
+
+        {% if ads %}
+            <div class="carousel-container relative w-full overflow-hidden rounded-xl mb-6 bg-gray-100">
+                <div id="carouselInner" class="carousel-inner">
+                    {% for ad in ads %}
+                        <div class="carousel-item p-2">
+                            <!-- Enlace a la vista de redirección del anuncio -->
+                            <a href="{% url 'ads:ad_redirect' ad.id %}" target="_blank" title="{{ ad.name }}">
+                                <img src="{{ ad.image.url }}" alt="{{ ad.name }}" class="object-cover w-full h-full">
+                            </a>
+                            <!-- Este div de overlay sigue usando opacidad para el efecto hover,
+                                 que es un efecto diferente al del movimiento del carrusel. -->
+                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/50 to-transparent p-4 text-white text-lg font-semibold rounded-b-xl opacity-0 hover:opacity-100 transition-opacity duration-300">
+                                {{ ad.name }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="carousel-controls flex justify-center gap-4 mt-4">
+                <button id="prevBtn" class="px-6 py-3 rounded-full text-lg">← Anterior</button>
+                <button id="nextBtn" class="px-6 py-3 rounded-full text-lg">Siguiente →</button>
+            </div>
+
+        {% else %}
+            <p class="text-gray-600 text-lg">Este carrusel no tiene anuncios activos para mostrar.</p>
+        {% endif %}
+    </div>
+
+    <!-- GSAP CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const carouselInner = document.getElementById('carouselInner');
+            const carouselItems = Array.from(carouselInner.children);
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const totalItems = carouselItems.length;
+            let currentIndex = 0;
+
+            // Si no hay ítems, deshabilitar botones y salir
+            if (totalItems === 0) {
+                prevBtn.disabled = true;
+                nextBtn.disabled = true;
+                return;
+            }
+
+            // Establecer la posición inicial del contenedor del carrusel
+            // No usamos opacidad aquí, solo la posición horizontal.
+            gsap.set(carouselInner, { xPercent: 0 });
+
+
+            // Función para actualizar la posición del carrusel (moviendo el contenedor)
+            function updateCarousel() {
+                // Calcula el porcentaje de desplazamiento necesario para mostrar el item actual
+                // Si currentIndex es 0, xPercent será 0.
+                // Si currentIndex es 1, xPercent será -100 (mueve el carrusel 100% a la izquierda).
+                // Si currentIndex es 2, xPercent será -200 (mueve el carrusel 200% a la izquierda).
+                const targetXPercent = -currentIndex * 100;
+
+                // Anima el contenedor interior del carrusel a la nueva posición
+                gsap.to(carouselInner, {
+                    xPercent: targetXPercent,
+                    duration: 0.6, // Duración de la animación
+                    ease: "power2.out" // Tipo de easing para una animación suave
+                });
+
+                // Deshabilitar/Habilitar botones
+                prevBtn.disabled = currentIndex === 0;
+                nextBtn.disabled = currentIndex === totalItems - 1;
+            }
+
+            // Event listener para el botón "Siguiente"
+            nextBtn.addEventListener('click', () => {
+                stopAutoPlay(); // Detener auto-play al interactuar
+                if (currentIndex < totalItems - 1) {
+                    currentIndex++;
+                    updateCarousel();
+                }
+            });
+
+            // Event listener para el botón "Anterior"
+            prevBtn.addEventListener('click', () => {
+                stopAutoPlay(); // Detener auto-play al interactuar
+                if (currentIndex > 0) {
+                    currentIndex--;
+                    updateCarousel();
+                }
+            });
+
+            // Auto-play
+            let autoPlayInterval;
+            const autoPlayDelay = 5000; // 5 segundos
+
+            function startAutoPlay() {
+                if (totalItems > 1) { // Solo si hay más de un anuncio
+                    stopAutoPlay(); // Asegurarse de que no haya múltiples intervalos
+                    autoPlayInterval = setInterval(() => {
+                        currentIndex = (currentIndex + 1) % totalItems;
+                        updateCarousel();
+                    }, autoPlayDelay);
+                }
+            }
+
+            function stopAutoPlay() {
+                clearInterval(autoPlayInterval);
+            }
+
+            // Reiniciar auto-play en carga inicial
+            startAutoPlay();
+
+            // Los eventos de mouseover/mouseout no son necesarios si detienes el auto-play
+            // en el click de los botones y reinicias solo en carga/después de un tiempo.
+            // Si quieres que el mouseover detenga el auto-play y lo reinicie al salir,
+            // las líneas que tenías antes serían apropiadas:
+            // prevBtn.addEventListener('mouseover', stopAutoPlay);
+            // nextBtn.addEventListener('mouseover', stopAutoPlay);
+            // prevBtn.addEventListener('mouseout', startAutoPlay);
+            // nextBtn.addEventListener('mouseout', startAutoPlay);
+
+            // Llamada inicial para mostrar el primer anuncio correctamente
+            updateCarousel();
+        });
+    </script>
+</body>
+</html>
