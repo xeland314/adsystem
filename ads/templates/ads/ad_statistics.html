@@ -1,0 +1,214 @@
+<!-- templates/ads/ad_statistics.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estadísticas de Anuncios</title>
+    <!-- Incluir Tailwind CSS desde CDN para estilos rápidos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Incluir Plotly.js desde CDN -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        /* Estilos personalizados para el cuerpo y la fuente */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* bg-gray-100 */
+        }
+        /* Estilos para que los campos de fecha se vean bien */
+        input[type="date"] {
+            @apply shadow appearance-none border rounded-lg py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-blue-500;
+        }
+    </style>
+</head>
+<body class="sm:p-8">
+    <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-xl">
+        <div class="flex flex-col gap-y-4 sm:gap-y-0 sm:flex-row justify-between items-center mb-8">
+            <h1 class="text-4xl font-extrabold text-gray-900 text-center">Estadísticas del Sistema de Publicidad</h1>
+            {% if user.is_authenticated %}
+                <a href="{% url 'ads:logout' %}" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200 ease-in-out transform hover:scale-105">
+                    Cerrar Sesión ({{ user.username }})
+                </a>
+            {% endif %}
+        </div>
+
+        <!-- Mensajes de Django (ej. errores de formato de fecha) -->
+        {% if messages %}
+            <ul class="mb-4">
+                {% for message in messages %}
+                    <li class="p-3 rounded-lg text-sm {% if 'error' in message.tags %}bg-red-100 text-red-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                        {{ message }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <!-- Formulario de filtro de fechas -->
+        <form method="get" class="mb-8 p-4 bg-gray-50 rounded-lg shadow-sm flex flex-wrap gap-4 items-end justify-center">
+            <div class="flex flex-col">
+                <label for="start_date" class="text-gray-700 text-sm font-semibold mb-1">Fecha de Inicio:</label>
+                <input type="date" id="start_date" name="start_date" value="{{ start_date_str }}" class="date-input">
+            </div>
+            <div class="flex flex-col">
+                <label for="end_date" class="text-gray-700 text-sm font-semibold mb-1">Fecha de Fin:</label>
+                <input type="date" id="end_date" name="end_date" value="{{ end_date_str }}" class="date-input">
+            </div>
+            <div class="flex flex-col">
+                <label for="selected_date" class="text-gray-700 text-sm font-semibold mb-1">Ver por Hora (Día Específico):</label>
+                <input type="date" id="selected_date" name="selected_date" value="{{ selected_date_str }}" class="date-input">
+            </div>
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transition duration-200 ease-in-out transform hover:scale-105 mt-2">
+                Filtrar Estadísticas
+            </button>
+            <a href="{% url 'ads:ad_statistics' %}" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transition duration-200 ease-in-out transform hover:scale-105 mt-2">
+                Restablecer Filtros
+            </a>
+        </form>
+
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+            <div class="bg-blue-100 p-6 rounded-lg shadow-md text-center">
+                <h2 class="text-xl font-semibold text-blue-800 mb-2">Clicks Globales Totales</h2>
+                <p class="text-4xl font-bold text-blue-600">{{ total_global_clicks }}</p>
+            </div>
+            <div class="bg-green-100 p-6 rounded-lg shadow-md text-center">
+                <h2 class="text-xl font-semibold text-green-800 mb-2">Clicks Globales Únicos</h2>
+                <p class="text-4xl font-bold text-green-600">{{ total_unique_global_clicks }}</p>
+            </div>
+            <div class="bg-yellow-100 p-6 rounded-lg shadow-md text-center">
+                <h2 class="text-xl font-semibold text-yellow-800 mb-2">Anuncios Activos</h2>
+                <p class="text-4xl font-bold text-yellow-600">{{ ads_with_clicks|length }}</p>
+            </div>
+        </div>
+
+        <h2 class="text-3xl font-bold text-gray-800 mt-12 mb-6 border-b-2 pb-2">Gráficos de Clicks</h2>
+
+        <!-- Contenedor para el gráfico de clicks por línea de tiempo (día u hora) -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">{{ timeline_title | escapejs }}</h3>
+            <div id="timelineClicksChart" class="w-full h-96"></div>
+        </div>
+
+        <!-- Contenedor para el gráfico de clicks por anuncio -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Total de Clicks por Anuncio</h3>
+            <div id="adClicksChart" class="w-full h-96"></div>
+        </div>
+
+
+        <h2 class="text-3xl font-bold text-gray-800 mt-12 mb-6 border-b-2 pb-2">Tabla de Clicks por Anuncio</h2>
+        {% if ads_with_clicks %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white border border-gray-200 rounded-lg shadow-sm">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg">Anuncio</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total de Clicks</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-lg">Clicks Únicos</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for ad in ads_with_clicks %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ ad.name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ ad.total_clicks_count }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ ad.unique_clicks_count }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-gray-600 text-center text-lg mt-8">No hay anuncios para mostrar estadísticas en este rango.</p>
+        {% endif %}
+    </div>
+
+    <script>
+        // Parsear los datos JSON pasados desde Django
+        const adsClicksData = JSON.parse('{{ ads_clicks_data_json | escapejs }}');
+        const clicksTimelineData = JSON.parse('{{ clicks_timeline_data_json | escapejs }}');
+        const xAxisLabel = '{{ x_axis_label | escapejs }}';
+        const timelineTitle = '{{ timeline_title | escapejs }}';
+
+
+        // Función para renderizar el gráfico de clicks por anuncio (Barras agrupadas)
+        function renderAdClicksChart() {
+            const adNames = adsClicksData.map(d => d.name);
+            const totalClicks = adsClicksData.map(d => d.total);
+            const uniqueClicks = adsClicksData.map(d => d.unique);
+
+            const traceTotal = {
+                x: adNames,
+                y: totalClicks,
+                name: 'Total Clicks',
+                type: 'bar',
+                marker: { color: '#3b82f6' } // Un azul de Tailwind
+            };
+
+            const traceUnique = {
+                x: adNames,
+                y: uniqueClicks,
+                name: 'Clicks Únicos',
+                type: 'bar',
+                marker: { color: '#10b981' } // Un verde de Tailwind
+            };
+
+            const data = [traceTotal, traceUnique];
+
+            const layout = {
+                barmode: 'group', // Barras agrupadas
+                title: 'Total y Clicks Únicos por Anuncio',
+                xaxis: { title: 'Anuncio' },
+                yaxis: { title: 'Número de Clicks', fixedrange: true },
+                margin: { l: 50, r: 50, b: 100, t: 50, pad: 4 },
+                height: 400,
+                autosize: true, // Ajuste automático al tamaño del contenedor
+                paper_bgcolor: '#f3f4f6', // Color de fondo del papel
+                plot_bgcolor: '#f3f4f6' // Color de fondo del área de trazado
+            };
+
+            // Renderizar el gráfico en el div 'adClicksChart'
+            Plotly.newPlot('adClicksChart', data, layout, {responsive: true});
+        }
+
+        // Función para renderizar el gráfico de clicks por línea de tiempo (día u hora)
+        function renderTimelineClicksChart() {
+            const times = clicksTimelineData.map(d => d.time);
+            const counts = clicksTimelineData.map(d => d.count);
+
+            const data = [{
+                x: times,
+                y: counts,
+                type: 'bar', // Gráfico de barras
+                marker: { color: '#a855f7' } // Un púrpura de Tailwind
+            }];
+
+            const layout = {
+                title: timelineTitle, // Título dinámico desde Django
+                xaxis: { title: xAxisLabel }, // Etiqueta del eje X dinámica
+                yaxis: { title: 'Número de Clicks', fixedrange: true },
+                margin: { l: 50, r: 50, b: 100, t: 50, pad: 4 },
+                height: 400,
+                autosize: true,
+                paper_bgcolor: '#f3f4f6',
+                plot_bgcolor: '#f3f4f6'
+            };
+
+            // Renderizar el gráfico en el div 'timelineClicksChart'
+            Plotly.newPlot('timelineClicksChart', data, layout, {responsive: true});
+        }
+
+        // Renderizar los gráficos cuando el DOM esté completamente cargado
+        document.addEventListener('DOMContentLoaded', function() {
+            renderAdClicksChart();
+            renderTimelineClicksChart();
+
+            // Asegurar que los gráficos se redimensionen al cambiar el tamaño de la ventana
+            window.addEventListener('resize', function() {
+                Plotly.relayout('adClicksChart', {width: document.getElementById('adClicksChart').clientWidth});
+                Plotly.relayout('timelineClicksChart', {width: document.getElementById('timelineClicksChart').clientWidth});
+            });
+        });
+    </script>
+</body>
+</html>

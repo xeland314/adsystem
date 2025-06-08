@@ -1,0 +1,77 @@
+<!-- templates/ads/login.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - Estadísticas</title>
+    <!-- Incluir Tailwind CSS desde CDN para estilos rápidos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilos personalizados */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* bg-gray-100 */
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+    <div class="bg-white p-8 rounded-lg shadow-xl max-w-sm w-full text-center">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Acceso a Estadísticas</h1>
+
+        <!-- Mostrar mensajes de Django (éxito/error) -->
+        {% if messages %}
+            <ul class="mb-4">
+                {% for message in messages %}
+                    <li {% if message.tags %} class="{{ message.tags }} text-sm font-medium p-2 rounded mb-2 {% if 'error' in message.tags %} bg-red-100 text-red-700 {% else %} bg-blue-100 text-blue-700 {% endif %}" {% endif %}>
+                        {{ message }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <form method="post" class="space-y-4">
+            {% csrf_token %} <!-- ¡Importante para la seguridad de Django! -->
+
+            <div class="text-left">
+                <label for="{{ form.username.id_for_label }}" class="block text-gray-700 text-sm font-bold mb-1">Nombre de Usuario:</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <p class="text-red-500 text-xs italic">{{ form.username.errors.as_text }}</p>
+                {% endif %}
+            </div>
+
+            <div class="text-left">
+                <label for="{{ form.password.id_for_label }}" class="block text-gray-700 text-sm font-bold mb-1">Contraseña:</label>
+                {{ form.password }}
+                {% if form.password.errors %}
+                    <p class="text-red-500 text-xs italic">{{ form.password.errors.as_text }}</p>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transition duration-200 ease-in-out transform hover:scale-105">
+                Iniciar Sesión
+            </button>
+        </form>
+    </div>
+
+    <!-- Puedes añadir un enlace para cerrar sesión en la página de estadísticas si lo deseas -->
+    <!-- Por ejemplo, en templates/ads/ad_statistics.html: -->
+    {# <a href="{% url 'ads:logout' %}" class="mt-8 text-blue-500 hover:text-blue-700">Cerrar Sesión</a> #}
+
+    <script>
+        // Aplicar estilos Tailwind a los campos del formulario generados por Django
+        document.addEventListener('DOMContentLoaded', function() {
+            const usernameInput = document.getElementById('id_username');
+            const passwordInput = document.getElementById('id_password');
+
+            if (usernameInput) {
+                usernameInput.classList.add('shadow', 'appearance-none', 'border', 'rounded-lg', 'w-full', 'py-2', 'px-3', 'text-gray-700', 'leading-tight', 'focus:outline-none', 'focus:shadow-outline', 'focus:ring-2', 'focus:ring-blue-500');
+            }
+            if (passwordInput) {
+                passwordInput.classList.add('shadow', 'appearance-none', 'border', 'rounded-lg', 'w-full', 'py-2', 'px-3', 'text-gray-700', 'leading-tight', 'focus:outline-none', 'focus:shadow-outline', 'focus:ring-2', 'focus:ring-blue-500');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+[MASTER]
+ignore=migrations
+
+[TYPECHECK]
+ignored-classes=Click,Ad

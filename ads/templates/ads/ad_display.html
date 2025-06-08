@@ -1,0 +1,49 @@
+<!-- templates/ads/ad_display.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ ad.name }} - Anuncio</title>
+    <!-- Incluir Tailwind CSS desde CDN para estilos rápidos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilos personalizados para el cuerpo y la fuente */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* bg-gray-100 */
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+    <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full text-center">
+        <h1 class="text-3xl font-bold text-gray-800 mb-4">{{ ad.name }}</h1>
+        {% if ad.image %}
+            <!-- NOTA IMPORTANTE: Hemos quitado el 'href' directo y ahora usamos 'onclick'
+                 para que JavaScript maneje la redirección. Esto hace que sea más difícil
+                 para los bloqueadores de anuncios seguir el enlace automáticamente. -->
+            <a href="javascript:void(0);" onclick="handleAdClick({{ ad.id }})" class="block rounded-lg overflow-hidden border-2 border-transparent hover:border-blue-500 transition-all duration-300">
+                <img src="{{ ad.image.url }}" alt="{{ ad.name }}" class="w-full h-auto rounded-lg mb-4" style="min-height: 100px; object-fit: cover;">
+            </a>
+        {% else %}
+            <p class="text-gray-600 mb-4">No hay imagen disponible para este anuncio.</p>
+        {% endif %}
+        <p class="text-gray-700 text-lg mb-6">¡Haz clic en la imagen para visitar el sitio!</p>
+
+        <p class="text-gray-500 text-sm">Este anuncio es patrocinado por {{ ad.name }}.</p>
+    </div>
+
+    <script>
+        // Función JavaScript para manejar el clic en el anuncio
+        function handleAdClick(adId) {
+            // Añadir una pequeña pausa (ej. 100ms) antes de redirigir.
+            // Esto ayuda a que el evento de clic sea más "realista" para el navegador,
+            // dificultando que los bots o pre-cargadores lo detecten y actúen instantáneamente.
+            setTimeout(() => {
+                // Redirigir a la vista de Django que registra el click y luego redirige al destino
+                window.location.href = `/ads/${adId}/redirect/`;
+            }, 100); // Pausa de 100 milisegundos
+        }
+    </script>
+</body>
+</html>

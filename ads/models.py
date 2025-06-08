@@ -1,0 +1,90 @@
+import os
+import uuid
+from django.db import models
+from django.utils import timezone
+
+
+# Función personalizada para renombrar la imagen con un UUID4
+def ad_image_upload_path(instance, filename):
+    """
+    Renombra el archivo de imagen subido a un nombre UUID4
+    manteniendo la extensión original.
+    """
+    # instance es la instancia del modelo Ad (o el modelo que está siendo guardado)
+    # filename es el nombre original del archivo subido (ej. 'mi_banner.png')
+
+    # Obtener la extensión del archivo original
+    # os.path.splitext() divide la ruta en (root, ext)
+    _, ext = os.path.splitext(filename)
+
+    # Generar un nombre de archivo único usando UUID4
+    # uuid.uuid4() genera un UUID aleatorio
+    # .hex lo convierte a una cadena hexadecimal
+    new_filename = f"{uuid.uuid4().hex}{ext}"
+
+    # Construir la ruta de subida.
+    # Aquí puedes añadir directorios si quieres organizar tus imágenes.
+    # Por ejemplo, puedes ponerlas en un subdirectorio 'banners/':
+    return os.path.join("images", "banners", new_filename)
+    # O si solo quieres un directorio 'images' como antes, simplemente:
+    # return os.path.join('images', new_filename)
+
+
+class Ad(models.Model):
+    """
+    Modelo para representar un anuncio publicitario.
+    """
+
+    name = models.CharField(max_length=200, verbose_name="Nombre del Anuncio")
+    # ¡Modificamos el argumento upload_to para usar nuestra función!
+    image = models.ImageField(
+        upload_to=ad_image_upload_path, verbose_name="Imagen del Anuncio"
+    )
+    target_url = models.URLField(verbose_name="URL de Destino")
+    is_active = models.BooleanField(default=True, verbose_name="Activo")
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name="Fecha de Creación"
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name="Última Actualización"
+    )
+    # Campo para almacenar el número total de clics. Se actualizará en la vista.
+    total_clicks = models.PositiveIntegerField(
+        default=0, verbose_name="Total de Clicks"
+    )
+
+    def __str__(self):
+        return f"{self.name}"
+
+    class Meta:
+        verbose_name = "Anuncio"
+        ordering = ["-created_at"]
+
+
+class Click(models.Model):
+    """
+    Modelo para registrar cada click en un anuncio.
+    """
+
+    ad = models.ForeignKey(
+        Ad, on_delete=models.CASCADE, related_name="clicks", verbose_name="Anuncio"
+    )
+    timestamp = models.DateTimeField(
+        default=timezone.now, verbose_name="Fecha/Hora del Click"
+    )
+    user_ip = models.GenericIPAddressField(
+        verbose_name="Dirección IP del Usuario", null=True, blank=True
+    )
+    user_agent = models.TextField(
+        verbose_name="User Agent del Navegador", null=True, blank=True
+    )
+    session_id = models.CharField(
+        max_length=255, verbose_name="ID de Sesión (hash)", null=True, blank=True
+    )
+
+    def __str__(self):
+        return f"Click en {self.ad.name} el {self.timestamp}"
+
+    class Meta:
+        verbose_name = "Click"
+        ordering = ["-timestamp"]
