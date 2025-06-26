@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     "ads",
     "axes", # Añadido para django-axes
     "rest_framework",
+    "drf_yasg",
 ]
 
 MIDDLEWARE = [
