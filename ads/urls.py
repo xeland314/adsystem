@@ -8,7 +8,7 @@ app_name = "ads"
 
 
 urlpatterns = [
-    path("<int:ad_id>/display/", views.ad_display, name="ad_display"),
+    path("display/", views.ad_display, name="ad_display"),
     path("<int:ad_id>/redirect/", views.ad_redirect, name="ad_redirect"),
     path("statistics/", views.ad_statistics, name="ad_statistics"),
     path("login/", views.user_login, name="login"),

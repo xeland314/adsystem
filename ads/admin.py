@@ -1,6 +1,6 @@
 # ads/admin.py
 from django.contrib import admin
-from .models import Ad, Click, Carousel
+from .models import Ad, Click, Carousel, Keyword
 from django.db.models import Count
 
 
@@ -18,11 +18,24 @@ class AdAdmin(admin.ModelAdmin):
         "total_clicks",
         "created_at",
     )
-    list_filter = ("is_active", "created_at")
-    search_fields = ("name", "target_url")
+    list_filter = ("is_active", "created_at", "target_gender")
+    search_fields = ("name", "target_url", "target_location")
     readonly_fields = ("created_at", "updated_at", "total_clicks")
     fieldsets = (
         (None, {"fields": ("name", "image", "target_url", "is_active")}),
+        (
+            "Segmentación de Audiencia",
+            {
+                "fields": (
+                    "target_age_min",
+                    "target_age_max",
+                    "target_gender",
+                    "target_location",
+                    "target_keywords",
+                ),
+                "classes": ("collapse",),
+            },
+        ),
         (
             "Información Adicional",
             {
@@ -31,6 +44,7 @@ class AdAdmin(admin.ModelAdmin):
             },
         ),
     )
+    filter_horizontal = ("target_keywords",)
 
     def image_tag(self, obj):
         """
@@ -117,3 +131,13 @@ class CarouselAdmin(admin.ModelAdmin):
         return obj.ads.count()
 
     ad_count.short_description = "Número de Anuncios"
+
+
+@admin.register(Keyword)
+class KeywordAdmin(admin.ModelAdmin):
+    """
+    Configuración de la administración para el modelo Keyword.
+    """
+
+    list_display = ("name",)
+    search_fields = ("name",)

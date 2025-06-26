@@ -30,10 +30,29 @@ def ad_image_upload_path(instance, filename):
     # return os.path.join('images', new_filename)
 
 
+class Keyword(models.Model):
+    """
+    Modelo para palabras clave que se pueden asociar con anuncios.
+    """
+    name = models.CharField(max_length=100, unique=True, verbose_name="Palabra Clave")
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = "Palabra Clave"
+        ordering = ["name"]
+
+
 class Ad(models.Model):
     """
     Modelo para representar un anuncio publicitario.
     """
+
+    class Gender(models.TextChoices):
+        MALE = 'M', "Masculino"
+        FEMALE = 'F', "Femenino"
+        ANY = 'A', "Cualquiera"
 
     name = models.CharField(max_length=200, verbose_name="Nombre del Anuncio")
     # ¡Modificamos el argumento upload_to para usar nuestra función!
@@ -51,6 +70,32 @@ class Ad(models.Model):
     # Campo para almacenar el número total de clics. Se actualizará en la vista.
     total_clicks = models.PositiveIntegerField(
         default=0, verbose_name="Total de Clicks"
+    )
+
+    # Campos de segmentación
+    target_age_min = models.PositiveIntegerField(
+        null=True, blank=True, verbose_name="Edad Mínima del Público"
+    )
+    target_age_max = models.PositiveIntegerField(
+        null=True, blank=True, verbose_name="Edad Máxima del Público"
+    )
+    target_gender = models.CharField(
+        max_length=1,
+        choices=Gender.choices,
+        default=Gender.ANY,
+        verbose_name="Género del Público"
+    )
+    target_location = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name="Ubicación del Público",
+        help_text="Lista de ubicaciones separadas por comas (ej. España, México, Colombia)"
+    )
+    target_keywords = models.ManyToManyField(
+        Keyword,
+        blank=True,
+        verbose_name="Palabras Clave del Público",
+        help_text="Selecciona palabras clave que describan a tu audiencia."
     )
 
     def __str__(self):

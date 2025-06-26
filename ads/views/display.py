@@ -4,6 +4,7 @@ import uuid
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
+from django.db.models import Q
 
 from ads.models import Ad, Click
 
@@ -27,12 +28,45 @@ def get_user_agent(request):
     return request.META.get("HTTP_USER_AGENT", "")
 
 
-def ad_display(request, ad_id):
+def ad_display(request):
     """
-    Vista para mostrar un anuncio. La lógica de registro de clic se maneja
-    principalmente en la vista `ad_redirect` para una mejor validación.
+    Vista para mostrar un anuncio basado en la segmentación.
     """
-    ad = get_object_or_404(Ad, id=ad_id, is_active=True)
+    # Obtener el contexto del usuario
+    user_age = request.GET.get('age')
+    user_gender = request.GET.get('gender')
+    user_location = request.GET.get('location')
+    page_keywords = request.GET.getlist('keywords')
+
+    # Filtrar anuncios activos
+    ads = Ad.objects.filter(is_active=True)
+
+    # Filtrar por edad
+    if user_age:
+        ads = ads.filter(
+            Q(target_age_min__lte=user_age) | Q(target_age_min__isnull=True),
+            Q(target_age_max__gte=user_age) | Q(target_age_max__isnull=True),
+        )
+
+    # Filtrar por género
+    if user_gender:
+        ads = ads.filter(Q(target_gender=user_gender) | Q(target_gender='A'))
+
+    # Filtrar por ubicación
+    if user_location:
+        ads = ads.filter(Q(target_location__icontains=user_location) | Q(target_location__exact=''))
+
+    # Filtrar por palabras clave
+    if page_keywords:
+        ads = ads.filter(Q(target_keywords__name__in=page_keywords) | Q(target_keywords__isnull=True)).distinct()
+
+    # Seleccionar un anuncio al azar de los filtrados
+    ad = ads.order_by('?').first()
+
+    # Fallback a un anuncio general si no se encuentra ninguno
+    if not ad:
+        ad = Ad.objects.filter(is_active=True, target_age_min__isnull=True, target_age_max__isnull=True, target_gender='A', target_location__exact='', target_keywords__isnull=True).order_by('?').first()
+
     return render(request, 'ads/ad_display.html', {'ad': ad})
 
 
