@@ -2,6 +2,7 @@ from ads.views.login import user_login, user_logout
 from ads.views.display import ad_display, ad_redirect
 from ads.views.statistics import ad_statistics
 from ads.views.carousel import carousel_display
+from ads.views.api import AdListAPIView
 
 __all__ = [
     "user_login",
@@ -10,4 +11,5 @@ __all__ = [
     "ad_redirect",
     "ad_statistics",
     "carousel_display",
+    "AdListAPIView",
 ]

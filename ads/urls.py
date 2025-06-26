@@ -18,4 +18,5 @@ urlpatterns = [
         views.carousel_display,
         name="carousel_display",
     ),
+    path("api/ads/", views.AdListAPIView.as_view(), name="ad_list_api"),
 ]

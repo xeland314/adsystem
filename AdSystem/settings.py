@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     "whitenoise.runserver_nostatic",
     "ads",
     "axes", # Añadido para django-axes
+    "rest_framework",
 ]
 
 MIDDLEWARE = [
