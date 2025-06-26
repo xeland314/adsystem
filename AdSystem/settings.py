@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "whitenoise.runserver_nostatic",
     "ads",
+    "axes", # Añadido para django-axes
 ]
 
 MIDDLEWARE = [
@@ -75,6 +76,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "axes.middleware.AxesMiddleware", # Añadido para django-axes
 ]
 
 ROOT_URLCONF = "AdSystem.urls"
@@ -156,6 +158,29 @@ if not DEBUG:  # Tell Django to copy statics to the `staticfiles` directory
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# -------------------------------------------------------------
+# Configuración para django-axes
+# -------------------------------------------------------------
+
+AUTHENTICATION_BACKENDS = [
+    # AxesBackend should be the first backend in the AUTHENTICATION_BACKENDS list.
+    'axes.backends.AxesBackend',
+    # Django ModelBackend is the default authentication backend.
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+# Número de intentos de inicio de sesión fallidos antes de bloquear
+AXES_FAILURE_LIMIT = 5
+
+# Período de tiempo para el bloqueo (en horas)
+AXES_COOLOFF_TIME = 1
+
+# Bloquear por IP y nombre de usuario
+AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]
+
+# Usar el cache de Django para almacenar los intentos fallidos
+AXES_CACHE = 'default'
 
 # -------------------------------------------------------------
 # Configuración para autenticación
