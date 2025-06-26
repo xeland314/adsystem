@@ -1,7 +1,8 @@
 # ads/admin.py
 from django.contrib import admin
-from .models import Ad, Click, Carousel, Keyword, Campaign, Conversion
 from django.db.models import Count
+
+from .models import Ad, Click, Carousel, Keyword, Campaign, Conversion
 
 
 @admin.register(Campaign)

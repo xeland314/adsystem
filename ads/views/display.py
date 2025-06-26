@@ -6,7 +6,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from django.db.models import Q
 
-from ads.models import Ad, Click, Campaign
+from ads.models import Ad, Click
 
 
 def get_client_ip(request):
