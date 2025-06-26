@@ -1,7 +1,24 @@
 # ads/admin.py
 from django.contrib import admin
-from .models import Ad, Click, Carousel, Keyword
+from .models import Ad, Click, Carousel, Keyword, Campaign
 from django.db.models import Count
+
+
+@admin.register(Campaign)
+class CampaignAdmin(admin.ModelAdmin):
+    """
+    Configuración de la administración para el modelo Campaign.
+    """
+    list_display = (
+        "name",
+        "start_date",
+        "end_date",
+        "budget",
+        "is_active",
+    )
+    list_filter = ("is_active", "start_date", "end_date")
+    search_fields = ("name", "target_audience")
+    readonly_fields = ("created_at", "updated_at")
 
 
 @admin.register(Ad)
@@ -12,17 +29,18 @@ class AdAdmin(admin.ModelAdmin):
 
     list_display = (
         "name",
+        "campaign",
         "image_tag",
         "target_url",
         "is_active",
         "total_clicks",
         "created_at",
     )
-    list_filter = ("is_active", "created_at", "target_gender")
+    list_filter = ("is_active", "created_at", "target_gender", "campaign")
     search_fields = ("name", "target_url", "target_location")
     readonly_fields = ("created_at", "updated_at", "total_clicks")
     fieldsets = (
-        (None, {"fields": ("name", "image", "target_url", "is_active")}),
+        (None, {"fields": ("campaign", "name", "image", "target_url", "is_active")}),
         (
             "Segmentación de Audiencia",
             {
@@ -116,13 +134,23 @@ class CarouselAdmin(admin.ModelAdmin):
     Configuración de la administración para el modelo Carousel.
     """
 
-    list_display = ("name", "is_active", "ad_count", "created_at", "updated_at")
-    list_filter = ("is_active",)
+    list_display = ("name", "campaign", "is_active", "ad_count", "created_at", "updated_at")
+    list_filter = ("is_active", "campaign")
     search_fields = ("name",)
     filter_horizontal = (
         "ads",
     )  # Para un mejor selector del ManyToManyField en el admin
     readonly_fields = ("created_at", "updated_at")
+    fieldsets = (
+        (None, {"fields": ("campaign", "name", "ads", "is_active")}),
+        (
+            "Información Adicional",
+            {
+                "fields": ("created_at", "updated_at"),
+                "classes": ("collapse",),
+            },
+        ),
+    )
 
     def ad_count(self, obj):
         """

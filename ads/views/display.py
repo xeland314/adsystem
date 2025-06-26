@@ -6,7 +6,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from django.db.models import Q
 
-from ads.models import Ad, Click
+from ads.models import Ad, Click, Campaign
 
 
 def get_client_ip(request):
@@ -30,7 +30,7 @@ def get_user_agent(request):
 
 def ad_display(request):
     """
-    Vista para mostrar un anuncio basado en la segmentación.
+    Vista para mostrar un anuncio basado en la segmentación y campañas activas.
     """
     # Obtener el contexto del usuario
     user_age = request.GET.get('age')
@@ -38,8 +38,14 @@ def ad_display(request):
     user_location = request.GET.get('location')
     page_keywords = request.GET.getlist('keywords')
 
-    # Filtrar anuncios activos
-    ads = Ad.objects.filter(is_active=True)
+    # Filtrar anuncios activos y de campañas activas
+    today = timezone.now().date()
+    ads = Ad.objects.filter(
+        is_active=True,
+        campaign__is_active=True,
+        campaign__start_date__lte=today,
+        campaign__end_date__gte=today
+    )
 
     # Filtrar por edad
     if user_age:
@@ -65,7 +71,17 @@ def ad_display(request):
 
     # Fallback a un anuncio general si no se encuentra ninguno
     if not ad:
-        ad = Ad.objects.filter(is_active=True, target_age_min__isnull=True, target_age_max__isnull=True, target_gender='A', target_location__exact='', target_keywords__isnull=True).order_by('?').first()
+        ad = Ad.objects.filter(
+            is_active=True,
+            campaign__is_active=True,
+            campaign__start_date__lte=today,
+            campaign__end_date__gte=today,
+            target_age_min__isnull=True,
+            target_age_max__isnull=True,
+            target_gender='A',
+            target_location__exact='',
+            target_keywords__isnull=True
+        ).order_by('?').first()
 
     return render(request, 'ads/ad_display.html', {'ad': ad})
 

@@ -30,14 +30,55 @@ def ad_image_upload_path(instance, filename):
     # return os.path.join('images', new_filename)
 
 
+class Campaign(models.Model):
+    """
+    Modelo para campañas publicitarias.
+    """
+    name = models.CharField(max_length=200, verbose_name="Nombre de la Campaña")
+    start_date = models.DateField(verbose_name="Fecha de Inicio")
+    end_date = models.DateField(verbose_name="Fecha de Fin")
+    budget = models.DecimalField(
+        max_digits=10, decimal_places=2, verbose_name="Presupuesto"
+    )
+    target_audience = models.TextField(
+        blank=True, verbose_name="Audiencia Objetivo"
+    )
+    is_active = models.BooleanField(default=True, verbose_name="Activa")
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name="Fecha de Creación"
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name="Última Actualización"
+    )
+
+    def save(self, *args, **kwargs):
+        """
+        Sobrescribimos el método save para asegurarnos de que la fecha de fin
+        sea siempre posterior a la fecha de inicio.
+        """
+        if self.end_date < self.start_date:
+            raise ValueError("La fecha de fin debe ser posterior a la fecha de inicio.")
+        updated_at = timezone.now()
+        if not self.updated_at or self.updated_at < updated_at:
+            self.updated_at = updated_at
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return f"{self.name}"
+
+    class Meta:
+        verbose_name = "Campaña"
+        ordering = ["-start_date"]
+
+
 class Keyword(models.Model):
     """
     Modelo para palabras clave que se pueden asociar con anuncios.
     """
     name = models.CharField(max_length=100, unique=True, verbose_name="Palabra Clave")
 
-    def __str__(self):
-        return self.name
+    def __str__(self) -> str:
+        return f"{self.name}"
 
     class Meta:
         verbose_name = "Palabra Clave"
@@ -54,6 +95,9 @@ class Ad(models.Model):
         FEMALE = 'F', "Femenino"
         ANY = 'A', "Cualquiera"
 
+    campaign = models.ForeignKey(
+        Campaign, on_delete=models.CASCADE, related_name="ads", verbose_name="Campaña"
+    )
     name = models.CharField(max_length=200, verbose_name="Nombre del Anuncio")
     # ¡Modificamos el argumento upload_to para usar nuestra función!
     image = models.ImageField(
@@ -139,6 +183,9 @@ class Carousel(models.Model):
     """
     Modelo para un carrusel de anuncios, que contiene múltiples Ads.
     """
+    campaign = models.ForeignKey(
+        Campaign, on_delete=models.CASCADE, related_name="carousels", verbose_name="Campaña"
+    )
     name = models.CharField(max_length=200, unique=True, verbose_name="Nombre del Carrusel")
     # Los anuncios en este carrusel. Un carrusel puede tener muchos anuncios,
     # y un anuncio puede estar en muchos carruseles.
