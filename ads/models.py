@@ -115,6 +115,9 @@ class Ad(models.Model):
     total_clicks = models.PositiveIntegerField(
         default=0, verbose_name="Total de Clicks"
     )
+    total_impressions = models.PositiveIntegerField(
+        default=0, verbose_name="Total de Impresiones"
+    )
 
     # Campos de segmentación
     target_age_min = models.PositiveIntegerField(
@@ -154,6 +157,12 @@ class Ad(models.Model):
         blank=True,
         verbose_name="Días de la Semana de Visualización",
         help_text="Días de la semana separados por comas (ej. LUN,MAR,MIE)"
+    )
+
+    # Campo para pruebas A/B
+    ab_test_group = models.CharField(
+        max_length=50, blank=True, verbose_name="Grupo de Prueba A/B",
+        help_text="Identificador del grupo de prueba A/B al que pertenece este anuncio (ej. 'Control', 'Variante A')."
     )
 
     def __str__(self):
@@ -220,3 +229,33 @@ class Carousel(models.Model):
         verbose_name = "Carrusel de Anuncios"
         verbose_name_plural = "Carruseles de Anuncios"
         ordering = ['name']
+
+
+class Conversion(models.Model):
+    """
+    Modelo para registrar conversiones atribuidas a anuncios.
+    """
+    ad = models.ForeignKey(
+        Ad, on_delete=models.CASCADE, related_name="conversions", verbose_name="Anuncio"
+    )
+    timestamp = models.DateTimeField(
+        default=timezone.now, verbose_name="Fecha/Hora de Conversión"
+    )
+    conversion_type = models.CharField(
+        max_length=100, verbose_name="Tipo de Conversión" # Ej. 'registro', 'compra', 'descarga'
+    )
+    value = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Valor de Conversión"
+    )
+    session_id = models.CharField(
+        max_length=255, verbose_name="ID de Sesión (hash)", null=True, blank=True,
+        help_text="ID de sesión del usuario que realizó la conversión, para atribución."
+    )
+
+    def __str__(self):
+        return f"Conversión de {self.conversion_type} para {self.ad.name} el {self.timestamp}"
+
+    class Meta:
+        verbose_name = "Conversión"
+        verbose_name_plural = "Conversiones"
+        ordering = ["-timestamp"]

@@ -37,6 +37,7 @@ def ad_display(request):
     user_gender = request.GET.get('gender')
     user_location = request.GET.get('location')
     page_keywords = request.GET.getlist('keywords')
+    ab_test_group = request.GET.get('ab_test_group')
 
     # Filtrar anuncios activos y de campañas activas
     today = timezone.now().date()
@@ -80,6 +81,10 @@ def ad_display(request):
     if page_keywords:
         ads = ads.filter(Q(target_keywords__name__in=page_keywords) | Q(target_keywords__isnull=True)).distinct()
 
+    # Filtrar por grupo de prueba A/B
+    if ab_test_group:
+        ads = ads.filter(ab_test_group=ab_test_group)
+
     # Seleccionar un anuncio al azar de los filtrados
     ad = ads.order_by('?').first()
 
@@ -98,7 +103,12 @@ def ad_display(request):
             display_start_time__isnull=True,
             display_end_time__isnull=True,
             display_days_of_week__exact='',
+            ab_test_group__exact='', # Considerar anuncios sin grupo A/B
         ).order_by('?').first()
+
+    if ad:
+        ad.total_impressions += 1
+        ad.save()
 
     return render(request, 'ads/ad_display.html', {'ad': ad})
 

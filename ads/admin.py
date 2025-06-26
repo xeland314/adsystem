@@ -1,6 +1,6 @@
 # ads/admin.py
 from django.contrib import admin
-from .models import Ad, Click, Carousel, Keyword, Campaign
+from .models import Ad, Click, Carousel, Keyword, Campaign, Conversion
 from django.db.models import Count
 
 
@@ -34,14 +34,16 @@ class AdAdmin(admin.ModelAdmin):
         "target_url",
         "is_active",
         "total_clicks",
+        "total_impressions",
         "created_at",
         "display_start_time",
         "display_end_time",
         "display_days_of_week",
+        "ab_test_group",
     )
-    list_filter = ("is_active", "created_at", "target_gender", "campaign", "display_days_of_week")
+    list_filter = ("is_active", "created_at", "target_gender", "campaign", "display_days_of_week", "ab_test_group")
     search_fields = ("name", "target_url", "target_location")
-    readonly_fields = ("created_at", "updated_at", "total_clicks")
+    readonly_fields = ("created_at", "updated_at", "total_clicks", "total_impressions")
     fieldsets = (
         (None, {"fields": ("campaign", "name", "image", "target_url", "is_active")}),
         (
@@ -69,9 +71,16 @@ class AdAdmin(admin.ModelAdmin):
             },
         ),
         (
+            "Pruebas A/B",
+            {
+                "fields": ("ab_test_group",),
+                "classes": ("collapse",),
+            },
+        ),
+        (
             "Información Adicional",
             {
-                "fields": ("total_clicks", "created_at", "updated_at"),
+                "fields": ("total_clicks", "total_impressions", "created_at", "updated_at"),
                 "classes": ("collapse",),
             },
         ),
@@ -183,3 +192,14 @@ class KeywordAdmin(admin.ModelAdmin):
 
     list_display = ("name",)
     search_fields = ("name",)
+
+
+@admin.register(Conversion)
+class ConversionAdmin(admin.ModelAdmin):
+    """
+    Configuración de la administración para el modelo Conversion.
+    """
+    list_display = ("ad", "conversion_type", "value", "timestamp", "session_id")
+    list_filter = ("conversion_type", "timestamp", "ad")
+    search_fields = ("ad__name", "conversion_type", "session_id")
+    readonly_fields = ("timestamp",)

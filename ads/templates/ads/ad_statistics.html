@@ -95,6 +95,20 @@
             <div id="adClicksChart" class="w-full h-96"></div>
         </div>
 
+        <h2 class="text-3xl font-bold text-gray-800 mt-12 mb-6 border-b-2 pb-2">Gráficos Históricos</h2>
+
+        <!-- Contenedor para el gráfico de impresiones históricas -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Impresiones Históricas por Día</h3>
+            <div id="historicalImpressionsChart" class="w-full h-96"></div>
+        </div>
+
+        <!-- Contenedor para el gráfico de conversiones históricas -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Conversiones Históricas por Día y Tipo</h3>
+            <div id="historicalConversionsChart" class="w-full h-96"></div>
+        </div>
+
 
         <h2 class="text-3xl font-bold text-gray-800 mt-12 mb-6 border-b-2 pb-2">Tabla de Clicks por Anuncio</h2>
         {% if ads_with_clicks %}
@@ -104,7 +118,8 @@
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg">Anuncio</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total de Clicks</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-lg">Clicks Únicos</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Impresiones</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-lg">CTR (%)</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200">
@@ -112,7 +127,8 @@
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ ad.name }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ ad.total_clicks_count }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ ad.unique_clicks_count }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ ad.total_impressions }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ ad.ctr }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -127,6 +143,8 @@
         // Parsear los datos JSON pasados desde Django
         const adsClicksData = JSON.parse('{{ ads_clicks_data_json | escapejs }}');
         const clicksTimelineData = JSON.parse('{{ clicks_timeline_data_json | escapejs }}');
+        const historicalImpressionsData = JSON.parse('{{ historical_impressions_data_json | escapejs }}');
+        const historicalConversionsData = JSON.parse('{{ historical_conversions_data_json | escapejs }}');
         const xAxisLabel = '{{ x_axis_label | escapejs }}';
         const timelineTitle = '{{ timeline_title | escapejs }}';
 
@@ -198,15 +216,72 @@
             Plotly.newPlot('timelineClicksChart', data, layout, {responsive: true});
         }
 
+        // Función para renderizar el gráfico de impresiones históricas
+        function renderHistoricalImpressionsChart() {
+            const dates = historicalImpressionsData.map(d => d.date);
+            const impressions = historicalImpressionsData.map(d => d.count);
+
+            const data = [{
+                x: dates,
+                y: impressions,
+                mode: 'lines+markers',
+                name: 'Impresiones',
+                line: { color: '#f59e0b' } // Un naranja de Tailwind
+            }];
+
+            const layout = {
+                title: 'Impresiones Históricas por Día',
+                xaxis: { title: 'Fecha' },
+                yaxis: { title: 'Número de Impresiones', fixedrange: true },
+                margin: { l: 50, r: 50, b: 100, t: 50, pad: 4 },
+                height: 400,
+                autosize: true,
+                paper_bgcolor: '#f3f4f6',
+                plot_bgcolor: '#f3f4f6'
+            };
+
+            Plotly.newPlot('historicalImpressionsChart', data, layout, {responsive: true});
+        }
+
+        // Función para renderizar el gráfico de conversiones históricas
+        function renderHistoricalConversionsChart() {
+            const data = [];
+            for (const type in historicalConversionsData) {
+                data.push({
+                    x: historicalConversionsData[type].dates,
+                    y: historicalConversionsData[type].counts,
+                    mode: 'lines+markers',
+                    name: type,
+                });
+            }
+
+            const layout = {
+                title: 'Conversiones Históricas por Día y Tipo',
+                xaxis: { title: 'Fecha' },
+                yaxis: { title: 'Número de Conversiones', fixedrange: true },
+                margin: { l: 50, r: 50, b: 100, t: 50, pad: 4 },
+                height: 400,
+                autosize: true,
+                paper_bgcolor: '#f3f4f6',
+                plot_bgcolor: '#f3f4f6'
+            };
+
+            Plotly.newPlot('historicalConversionsChart', data, layout, {responsive: true});
+        }
+
         // Renderizar los gráficos cuando el DOM esté completamente cargado
         document.addEventListener('DOMContentLoaded', function() {
             renderAdClicksChart();
             renderTimelineClicksChart();
+            renderHistoricalImpressionsChart();
+            renderHistoricalConversionsChart();
 
             // Asegurar que los gráficos se redimensionen al cambiar el tamaño de la ventana
             window.addEventListener('resize', function() {
                 Plotly.relayout('adClicksChart', {width: document.getElementById('adClicksChart').clientWidth});
                 Plotly.relayout('timelineClicksChart', {width: document.getElementById('timelineClicksChart').clientWidth});
+                Plotly.relayout('historicalImpressionsChart', {width: document.getElementById('historicalImpressionsChart').clientWidth});
+                Plotly.relayout('historicalConversionsChart', {width: document.getElementById('historicalConversionsChart').clientWidth});
             });
         });
     </script>
