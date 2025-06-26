@@ -142,6 +142,20 @@ class Ad(models.Model):
         help_text="Selecciona palabras clave que describan a tu audiencia."
     )
 
+    # Campos de programación
+    display_start_time = models.TimeField(
+        null=True, blank=True, verbose_name="Hora de Inicio de Visualización"
+    )
+    display_end_time = models.TimeField(
+        null=True, blank=True, verbose_name="Hora de Fin de Visualización"
+    )
+    display_days_of_week = models.CharField(
+        max_length=60,  # e.g., "MON,TUE,WED,THU,FRI,SAT,SUN"
+        blank=True,
+        verbose_name="Días de la Semana de Visualización",
+        help_text="Días de la semana separados por comas (ej. LUN,MAR,MIE)"
+    )
+
     def __str__(self):
         return f"{self.name}"
 

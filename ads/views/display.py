@@ -40,11 +40,25 @@ def ad_display(request):
 
     # Filtrar anuncios activos y de campañas activas
     today = timezone.now().date()
+    now = timezone.now().time()
+    current_day_of_week = datetime.datetime.now().strftime('%a').upper() # Ej. MON, TUE
+
     ads = Ad.objects.filter(
         is_active=True,
         campaign__is_active=True,
         campaign__start_date__lte=today,
         campaign__end_date__gte=today
+    )
+
+    # Filtrar por horario
+    ads = ads.filter(
+        Q(display_start_time__lte=now) | Q(display_start_time__isnull=True),
+        Q(display_end_time__gte=now) | Q(display_end_time__isnull=True),
+    )
+
+    # Filtrar por día de la semana
+    ads = ads.filter(
+        Q(display_days_of_week__icontains=current_day_of_week) | Q(display_days_of_week__exact='')
     )
 
     # Filtrar por edad
@@ -80,7 +94,10 @@ def ad_display(request):
             target_age_max__isnull=True,
             target_gender='A',
             target_location__exact='',
-            target_keywords__isnull=True
+            target_keywords__isnull=True,
+            display_start_time__isnull=True,
+            display_end_time__isnull=True,
+            display_days_of_week__exact='',
         ).order_by('?').first()
 
     return render(request, 'ads/ad_display.html', {'ad': ad})

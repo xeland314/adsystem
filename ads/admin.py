@@ -35,8 +35,11 @@ class AdAdmin(admin.ModelAdmin):
         "is_active",
         "total_clicks",
         "created_at",
+        "display_start_time",
+        "display_end_time",
+        "display_days_of_week",
     )
-    list_filter = ("is_active", "created_at", "target_gender", "campaign")
+    list_filter = ("is_active", "created_at", "target_gender", "campaign", "display_days_of_week")
     search_fields = ("name", "target_url", "target_location")
     readonly_fields = ("created_at", "updated_at", "total_clicks")
     fieldsets = (
@@ -50,6 +53,17 @@ class AdAdmin(admin.ModelAdmin):
                     "target_gender",
                     "target_location",
                     "target_keywords",
+                ),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Programación de Anuncios",
+            {
+                "fields": (
+                    "display_start_time",
+                    "display_end_time",
+                    "display_days_of_week",
                 ),
                 "classes": ("collapse",),
             },
