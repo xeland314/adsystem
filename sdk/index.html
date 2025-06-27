@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AdSystem SDK Example</title>
+    <link href="./dist/output.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .ad-container {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 20px;
+            background-color: #fff;
+        }
+        .admin-iframe-container {
+            margin-top: 50px;
+            border: 1px solid #ccc;
+            width: 100%;
+            height: 800px;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="text-3xl font-bold mb-6">AdSystem SDK Example Page</h1>
+
+    <div class="ad-container" id="ad-slot-1">
+        <p>Loading Ad 1...</p>
+    </div>
+
+    <div class="ad-container" id="ad-slot-2">
+        <p>Loading Ad 2 (targeted)...</p>
+    </div>
+
+    <div class="ad-container" id="carousel-slot-1">
+        <p>Loading Carousel 1...</p>
+    </div>
+
+    <h2 class="text-2xl font-bold mt-10 mb-4">Django Admin Panel (via iframe)</h2>
+    <div class="admin-iframe-container">
+        <iframe src="http://127.0.0.1:8000/admin/" title="Django Admin Panel"></iframe>
+    </div>
+
+    <script src="./src/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Example 1: Display a random ad
+            AdSystemSDK.displayAd('ad-slot-1');
+
+            // Example 2: Display a targeted ad
+            AdSystemSDK.displayAd('ad-slot-2', {
+                age: 30,
+                gender: 'F',
+                location: 'Spain',
+                keywords: ['fashion', 'travel'],
+                ab_test_group: 'Control'
+            });
+
+            // Example 3: Display a carousel
+            // You'll need to replace '1' with an actual carousel ID from your Django admin
+            AdSystemSDK.displayCarousel('carousel-slot-1', 1);
+        });
+    </script>
+</body>
+</html>
