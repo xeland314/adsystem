@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from ads.models import Ad, Campaign, Keyword
+from ads.models import Ad, Campaign, Keyword, Carousel
 
 
 class KeywordSerializer(serializers.ModelSerializer):
@@ -38,4 +38,18 @@ class AdSerializer(serializers.ModelSerializer):
             'display_end_time',
             'display_days_of_week',
             'ab_test_group',
+        ]
+
+
+class CarouselSerializer(serializers.ModelSerializer):
+    ads = AdSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Carousel
+        fields = [
+            'id',
+            'name',
+            'ads',
+            'is_active',
+            'campaign',
         ]

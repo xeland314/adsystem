@@ -4,8 +4,8 @@ from rest_framework.response import Response
 from django.db.models import Q
 from django.utils import timezone
 
-from ads.models import Ad
-from ads.serializers import AdSerializer
+from ads.models import Ad, Carousel
+from ads.serializers import AdSerializer, CarouselSerializer
 
 
 class AdListAPIView(generics.ListAPIView):
@@ -100,3 +100,17 @@ class AdListAPIView(generics.ListAPIView):
             serializer = self.get_serializer(fallback_ad)
             return Response(serializer.data)
         return Response({"detail": "No ad available"}, status=404)
+
+
+class CarouselListAPIView(generics.ListAPIView):
+    serializer_class = CarouselSerializer
+
+    def get_queryset(self):
+        today = timezone.now().date()
+        queryset = Carousel.objects.filter(
+            is_active=True,
+            campaign__is_active=True,
+            campaign__start_date__lte=today,
+            campaign__end_date__gte=today
+        ).prefetch_related('ads') # Prefetch related ads to avoid N+1 queries
+        return queryset

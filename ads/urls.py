@@ -1,6 +1,7 @@
 # ads/urls.py
 from django.urls import path
 from . import views
+from ads.views.api import AdListAPIView, CarouselListAPIView
 
 # ¡ESTA LÍNEA ES ESENCIAL! Define el espacio de nombres para tu aplicación.
 # Debe coincidir con el nombre que usas en {% url 'ads:...' %} en tus plantillas.
@@ -18,5 +19,6 @@ urlpatterns = [
         views.carousel_display,
         name="carousel_display",
     ),
-    path("api/ads/", views.AdListAPIView.as_view(), name="ad_list_api"),
+    path("api/ads/", AdListAPIView.as_view(), name="ad_list_api"),
+    path("api/carousels/", CarouselListAPIView.as_view(), name="carousel_list_api"),
 ]
