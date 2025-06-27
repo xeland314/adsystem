@@ -53,6 +53,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 APPEND_SLASH = True
 
+X_FRAME_OPTIONS = "ALLOWFROM"
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -63,8 +65,9 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "whitenoise.runserver_nostatic",
+    "corsheaders",
     "ads",
-    "axes", # Añadido para django-axes
+    "axes",
     "rest_framework",
     "drf_yasg",
 ]
@@ -73,12 +76,13 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "axes.middleware.AxesMiddleware", # Añadido para django-axes
+    "axes.middleware.AxesMiddleware",  # Añadido para django-axes
 ]
 
 ROOT_URLCONF = "AdSystem.urls"
@@ -167,9 +171,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTHENTICATION_BACKENDS = [
     # AxesBackend should be the first backend in the AUTHENTICATION_BACKENDS list.
-    'axes.backends.AxesBackend',
+    "axes.backends.AxesBackend",
     # Django ModelBackend is the default authentication backend.
-    'django.contrib.auth.backends.ModelBackend',
+    "django.contrib.auth.backends.ModelBackend",
 ]
 
 # Número de intentos de inicio de sesión fallidos antes de bloquear
@@ -182,7 +186,7 @@ AXES_COOLOFF_TIME = 1
 AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]
 
 # Usar el cache de Django para almacenar los intentos fallidos
-AXES_CACHE = 'default'
+AXES_CACHE = "default"
 
 # -------------------------------------------------------------
 # Configuración para autenticación
@@ -190,12 +194,14 @@ AXES_CACHE = 'default'
 
 # La URL a la que se redirigirá a los usuarios no autenticados
 # Puedes ajustarla si decides que tu página de login esté en otra ruta.
-LOGIN_URL = 'ads:login' # Usamos el espacio de nombres 'ads' y el nombre de la URL 'login'
+LOGIN_URL = (
+    "ads:login"  # Usamos el espacio de nombres 'ads' y el nombre de la URL 'login'
+)
 
 # URL a la que se redirigirá a los usuarios después de iniciar sesión con éxito.
 # Puedes cambiarla si quieres que vayan a una página diferente.
-LOGIN_REDIRECT_URL = 'ads:ad_statistics'
+LOGIN_REDIRECT_URL = "ads:ad_statistics"
 
 # URL a la que se redirigirá a los usuarios después de cerrar sesión.
 # Generalmente, se redirige de nuevo a la página de inicio de sesión o a la página principal.
-LOGOUT_REDIRECT_URL = 'ads:login'
+LOGOUT_REDIRECT_URL = "ads:login"
